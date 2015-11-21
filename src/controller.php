@@ -53,8 +53,10 @@ while ($file = array_shift($filesToRun)) {
 
 		$output = ob_get_clean();
 		$mutex->synchronized(Mutex::STD_OUT, function() use ($file, $output) {
-			echo "$file:\n";
-			echo "$output\n";
+			if ($output) {
+				echo "\e[1;34m$file:\e[0m\n";
+				echo "$output\n\n";
+			}
 		});
 		debug("exit");
 		die;
