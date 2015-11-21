@@ -15,7 +15,7 @@ class ProcessControl
 	/** @var int */
 	private $allowedPID;
 
-	/** @var AvlTree */
+	/** @var int[] pids */
 	private $children;
 
 	/** @var int */
@@ -37,10 +37,11 @@ class ProcessControl
 	{
 		assert(getmypid() === $this->allowedPID, 'Fork only allowed from original parent process');
 
-		while ($this->children->count() >= $this->childLimit) {
+		while (count($this->children) >= $this->childLimit) {
 			echo "waiting for child to exit\n";
 			$exitedChild = pcntl_wait($status, WUNTRACED);
-			$this->children->remove($exitedChild);
+			assert($exitedChild !== -1, 'No child remaining, but $children not cleared');
+			$this->collectStatus();
 		}
 
 		$childPid = pcntl_fork();
@@ -52,6 +53,32 @@ class ProcessControl
 		} else {
 			$this->children->add($childPid);
 			return self::PARENT;
+		}
+	}
+
+
+	protected function collectStatus()
+	{
+//		assert(getmypid() === $this->allowedPID, 'Collect status only allowed from original parent process');
+//
+//		foreach ($this->children as $childPID) {
+//			pcntl_wait($childPID, WNOHANG)
+//		}
+	}
+
+
+	public function collect()
+	{
+		$failsafe = 100;
+		while ($this->children->count() !== 0) {
+			echo "COLLECT waiting for child to exit\n";
+			$exitedChild = pcntl_wait($status, WUNTRACED);
+			assert($exitedChild !== -1, 'No child remaining, but $children not cleared');
+
+			var_dumP("remove $exitedChild");
+			$this->children->remove($exitedChild);
+
+			assert(--$failsafe < 0, 'Failed to collect child processes');
 		}
 	}
 

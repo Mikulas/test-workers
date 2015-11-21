@@ -8,6 +8,8 @@ function debug($message) {
 	echo getmypid() . (getmypid() === $parent ? " \e[31mparent\e[0m: " : ' child: ') . "$message\n";
 }
 
+ini_set('zend.assertions', 1); // generate and execute code
+ini_set('assert.exception', 1); // throw exceptions
 
 $filesToRun = $argv;
 array_shift($filesToRun);
@@ -15,6 +17,7 @@ array_shift($filesToRun);
 $control = new ProcessControl(getmypid(), 3);
 
 while ($file = array_shift($filesToRun)) {
+	var_dumP("FILE", $file);
 	if ($control->fork() === ProcessControl::CHILD) {
 		// child
 		debug("process '$file");
@@ -29,5 +32,5 @@ while ($file = array_shift($filesToRun)) {
 }
 
 // only parent will get here
-pcntl_wait($status); // protect against zombie children
+$control->collect();
 debug("exit");
