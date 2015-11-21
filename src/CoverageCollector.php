@@ -33,9 +33,11 @@ class CoverageCollector
 
 		} catch (AssertionError $e) {
 			$status = PHPUnit_Runner_BaseTestRunner::STATUS_FAILURE;
+			throw $e;
 
 		} catch (Error $e) {
 			$status = PHPUnit_Runner_BaseTestRunner::STATUS_ERROR;
+			throw $e;
 
 		} finally {
 			$coverage = $driver->stop();
