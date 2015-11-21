@@ -14,4 +14,4 @@ install:
 
 script:
   - tests/cases/controller.sh
-  - php tests/cases/SharedVariableTest.php
+  - phpdbg -qrr src/controller.php tests/cases/SharedFileVariableTest.php

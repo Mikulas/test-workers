@@ -37,11 +37,6 @@ class SharedMemoryVariable implements ISharedVariable
 		$this->mutex = $mutex;
 
 		$shmKey = ftok(__FILE__, 't');
-
-		if (@$oldId = shmop_open($shmKey, 'a', 0644, 0)) {
-			shmop_delete($oldId);
-		}
-
 		$this->shmId = shmop_open($shmKey, 'c', 0644, $bytesToAllocate);
 		assert($this->shmId, "Could not create shared memory segment");
 

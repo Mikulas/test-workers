@@ -10,6 +10,9 @@ class SharedFileVariable implements ISharedVariable
 	/** @var string absolute file path */
 	private $file;
 
+	/** @var bool */
+	private $destroyed = FALSE;
+
 
 	/**
 	 * @param Mutex $mutex
@@ -27,6 +30,7 @@ class SharedFileVariable implements ISharedVariable
 	 */
 	public function get()
 	{
+		assert(!$this->destroyed);
 		return $this->mutex->synchronized([__CLASS__, $this->file], function() {
 			if (!file_exists($this->file)) {
 				return NULL;
@@ -41,6 +45,7 @@ class SharedFileVariable implements ISharedVariable
 	 */
 	public function set($data)
 	{
+		assert(!$this->destroyed);
 		$this->mutex->synchronized([__CLASS__, $this->file], function() use ($data) {
 			file_put_contents($this->file, serialize($data));
 		});
@@ -49,6 +54,8 @@ class SharedFileVariable implements ISharedVariable
 
 	public function destroy()
 	{
+		assert(!$this->destroyed);
+		$this->destroyed = TRUE;
 		assert(unlink($this->file));
 	}
 
