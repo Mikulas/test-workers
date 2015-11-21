@@ -1,6 +1,5 @@
 <?php
 
-use Ardent\Collection\AvlTree;
 
 class ProcessControl
 {
@@ -8,11 +7,22 @@ class ProcessControl
 	/** @var int microseconds */
 	const FAILSAFE_TIMEOUT = 90 * 1e6;
 
+
 	/** @var int */
 	const PARENT = -2;
 
 	/** @var int */
 	const CHILD = 0;
+
+
+	/** @var int */
+	const CODE_SUCCESS = 0;
+
+	/** @var int */
+	const CODE_SKIP = 126;
+
+	/** @var int */
+	const CODE_FAIL = -1; // any other code that is not CODE_SUCCESS or CODE_SKIP
 
 
 	/** @var int */
@@ -23,6 +33,9 @@ class ProcessControl
 
 	/** @var int */
 	private $childLimit;
+
+	/** @var int[] */
+	private $counter = [self::CODE_SUCCESS => 0, self::CODE_SKIP => 0, self::CODE_FAIL => 0];
 
 
 	public function __construct($parentPID, $childLimit = 10)
@@ -70,12 +83,25 @@ class ProcessControl
 			$ret = pcntl_waitpid($childPID, $status, WNOHANG);
 			assert($ret !== -1, "Collect status failed, count not get status of '$childPID'");
 
-			if ($ret !== 0) {
-				debug("$childPID is dead");
-				unset($this->children[$childPID]);
-			} else {
+			if ($ret === 0) {
 				debug("$childPID is still alive");
+				continue;
 			}
+
+			debug("$childPID is dead");
+			assert(pcntl_wifexited($status));
+			switch (pcntl_wexitstatus($status)) {
+				case self::CODE_SUCCESS:
+					$this->counter[self::CODE_SUCCESS]++;
+					break;
+				case self::CODE_FAIL:
+					$this->counter[self::CODE_FAIL]++;
+					break;
+				default:
+					$this->counter[self::CODE_FAIL]++;
+					break;
+			}
+			unset($this->children[$childPID]);
 		}
 	}
 
@@ -94,6 +120,15 @@ class ProcessControl
 
 			assert(--$failsafe > 0, 'Failed to collect child processes');
 		}
+	}
+
+
+	/**
+	 * @return int[]
+	 */
+	public function getCounter()
+	{
+		return $this->counter;
 	}
 
 }

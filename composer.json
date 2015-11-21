@@ -10,7 +10,6 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "morrisonlevi/Ardent": "^0.20.1"
     },
     "autoload": {
         "classmap": ["src/"]

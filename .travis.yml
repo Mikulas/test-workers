@@ -1,0 +1,16 @@
+sudo: false
+language: php
+php:
+  - 7.0
+  - nightly
+
+cache:
+    directories:
+        - "$HOME/.composer/cache"
+
+install:
+  - travis_retry composer self-update --no-progress --no-interaction
+  - travis_retry composer install --prefer-dist --no-dev --no-progress --classmap-authoritative --no-interaction
+
+script:
+  - tests/cases/controller.sh

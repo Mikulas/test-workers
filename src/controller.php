@@ -4,6 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $parent = getmypid();
 function debug($message) {
+	return;
 	global $parent;
 	echo getmypid() . (getmypid() === $parent ? " \e[31mparent\e[0m: " : ' child: ') . "$message\n";
 }
@@ -15,6 +16,7 @@ $filesToRun = $argv;
 array_shift($filesToRun);
 
 $control = new ProcessControl(getmypid(), 3);
+$mutex = new Mutex(sys_get_temp_dir());
 
 if (PHP_SAPI !== 'phpdbg') {
 	echo "Expected phpdbg SAPI, run as\n";
@@ -28,11 +30,16 @@ if (version_compare(PHP_VERSION, '7.0.0RC7', '<')) {
 }
 
 while ($file = array_shift($filesToRun)) {
-	var_dumP("FILE", $file);
 	if ($control->fork() === ProcessControl::CHILD) {
 		// child
 		debug("process '$file");
-		sleep(1);
+		ob_start();
+		require_once $file;
+		$output = ob_get_clean();
+		$mutex->synchronizedStdOut(function() use ($file, $output) {
+			echo "$file:\n";
+			echo "$output\n";
+		});
 		debug("exit");
 		die;
 
@@ -44,4 +51,15 @@ while ($file = array_shift($filesToRun)) {
 
 // only parent will get here
 $control->waitForChildren();
+
+$counter = $control->getCounter();
+echo $counter[ProcessControl::CODE_FAIL] . " failed tests\n";
+echo $counter[ProcessControl::CODE_SKIP] . " skipped tests\n";
+echo $counter[ProcessControl::CODE_SUCCESS] . " tests passed\n";
+
 debug("exit");
+
+if ($counter[ProcessControl::CODE_FAIL] !== 0) {
+	exit(1);
+}
+exit(0);
