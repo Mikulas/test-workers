@@ -85,7 +85,7 @@ class Mutex
 	 * @return string
 	 * @throws InvalidArgumentException
 	 */
-	protected function getKey($key)
+	protected function getKey($key) : string
 	{
 		if (is_string($key)) {
 			return md5($key);

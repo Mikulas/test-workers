@@ -38,7 +38,7 @@ class ProcessControl
 	private $counter = [self::CODE_SUCCESS => 0, self::CODE_SKIP => 0, self::CODE_FAIL => 0];
 
 
-	public function __construct($parentPID, $childLimit = 10)
+	public function __construct(int $parentPID, int $childLimit = 10)
 	{
 		$this->allowedPID = $parentPID;
 		$this->childLimit = $childLimit;
@@ -49,7 +49,7 @@ class ProcessControl
 	/**
 	 * @return ProcessControl::PARENT|self::CHILD
 	 */
-	public function fork()
+	public function fork() : int
 	{
 		assert(getmypid() === $this->allowedPID, 'Fork only allowed from original parent process');
 
@@ -126,7 +126,7 @@ class ProcessControl
 	/**
 	 * @return int[]
 	 */
-	public function getCounter()
+	public function getCounter() : array
 	{
 		return $this->counter;
 	}
