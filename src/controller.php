@@ -1,35 +1,27 @@
 <?php
 
-function fork(callable $parent, callable $child, $repeat = 1)
-{
-	$pid = pcntl_fork();
-	if ($pid == -1) {
-		die('could not fork');
+require __DIR__ . '/../vendor/autoload.php';
 
-	} elseif ($pid) {
-		$parent();
-		if ($repeat > 0) {
-			fork($parent, $child, $repeat - 1);
-		}
-		pcntl_wait($status); // protect against zombie children
-
-	} else {
-		$child();
-	}
-}
+define('MAX_CONCURRENCY', 20);
 
 $filesToRun = $argv;
 array_shift($filesToRun);
 
-$spawnChildren = 10;
-$parentKernel = function() {
-	echo getmypid() . " parent\n";
-};
-$childKernel = function() {
-	echo getmypid() . " child\n";
-	//sleep(1);
-	echo getmypid() . "  child done\n";
-};
+$control = new ProcessControl(getmypid());
 
-fork($parentKernel, $childKernel, $spawnChildren);
-echo "exit\n";
+while ($file = array_shift($filesToRun)) {
+	if ($control->fork() === ProcessControl::CHILD) {
+		// child
+		echo "child: process '$file'\n";
+		echo "child exit\n";
+		die;
+
+	} else {
+		echo "parent: loop\n";
+		continue;
+	}
+}
+
+// only parent will get here
+pcntl_wait($status); // protect against zombie children
+echo "parent exit\n";
