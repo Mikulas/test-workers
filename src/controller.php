@@ -19,6 +19,7 @@ function debug($message) {
 ini_set('zend.assertions', 1); // generate and execute code
 ini_set('assert.exception', 1); // throw exceptions
 
+// TODO REFACTOR
 $filesToRun = $argv;
 array_shift($filesToRun);
 
@@ -83,10 +84,10 @@ $phpUnitCoverage = PhpUnitCoverageFactory::create($collector->getCoverages());
 $collector->destroy();
 
 $writer = new PHP_CodeCoverage_Report_Clover;
-$writer->process($phpUnitCoverage, '/tmp/clover.xml');
+$writer->process($phpUnitCoverage, dirname(__DIR__) . '/phpunit.xml.dist');
 
-$writer = new PHP_CodeCoverage_Report_HTML;
-$writer->process($phpUnitCoverage, '/tmp/code-coverage-report');
+//$writer = new PHP_CodeCoverage_Report_HTML;
+//$writer->process($phpUnitCoverage, '/tmp/code-coverage-report');
 
 if ($counter[ProcessControl::CODE_FAIL] !== 0) {
 	exit(1);
