@@ -1,5 +1,8 @@
 <?php
 
+namespace Mikulas\TestWorkers\Tests;
+
+
 /**
  * This class only for being covered
  */

@@ -2,7 +2,6 @@
 
 namespace Mikulas\TestWorkers;
 
-use Nette\Reflection\AnnotationsParser;
 use PHP_CodeCoverage_Driver_PHPDBG as PhpDbgDriver;
 use PHPUnit_Runner_BaseTestRunner as TestRunner;
 
@@ -26,60 +25,27 @@ class CoverageCollector
 
 	/**
 	 * @param string $file
-	 * @return string[] [string $file => int[] $lines]
+	 * @return string[] [string $fqn]
 	 */
 	public function covers(string $file)
 	{
-		$annotations = $this->getAnnotations($file);
+		$parser = new AnnotationParser();
+		$annotations = $parser->getAnnotations($file);
+
 		if (!isset($annotations['covers']) && !isset($annotations['coversNothing'])) {
-			echo "'$file' does not have @covers annotation\n";
+			echo "'$file' does not have @covers or @coversNothing annotation\n";
 			return [];
 		}
 
-		if ($annotations['coversNothing']) {
+		if (isset($annotations['coversNothing'])) {
 			return [];
 		}
 
 		$covers = [];
 		foreach ($annotations['covers'] as $name) {
-			AnnotationsParser::expandClassName(); // TODO
+			$covers[] = $parser->toFqn($file, $name);
 		}
-
-		return [];
-	}
-
-
-	/**
-	 * @param string $file
-	 * @return array
-	 */
-	protected function getAnnotations(string $file)
-	{
-		$content = file_get_contents($file);
-		$tokens = token_get_all($content);
-		$comments = array_filter($tokens, function($token) {
-			return is_array($token) && $token[0] === T_DOC_COMMENT;
-		});
-
-		if (!$comments) {
-			return [];
-		}
-
-		$docblock = array_shift($comments)[1];
-
-		$annotations = [];
-		// Strip away the docblock header and footer to ease parsing of one line annotations
-		$docblock = substr($docblock, 3, -2);
-
-		if (preg_match_all('/@(?P<name>[A-Za-z_-]+)(?:[ \t]+(?P<value>.*?))?[ \t]*\r?$/m', $docblock, $matches)) {
-			$numMatches = count($matches[0]);
-
-			for ($i = 0; $i < $numMatches; ++$i) {
-				$annotations[$matches['name'][$i]][] = $matches['value'][$i];
-			}
-		}
-
-		return $annotations;
+		return $covers;
 	}
 
 

@@ -102,7 +102,9 @@ class Controller
 				try {
 					if ($coverageModes) {
 						$covers = $collector->covers($file);
-						var_dumP($covers);
+						echo "this file covers:\n";
+						var_dump($covers);
+
 						$collector->collect(function() use ($file) {
 							require_once $file;
 						}, $file);
