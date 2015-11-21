@@ -14,6 +14,25 @@ class Application extends Console\Application
 
 	const DEFAULT_COMMAND = 'command';
 
+
+	public function getVersion()
+	{
+		return '1.0.0';
+	}
+
+
+	public function getName()
+	{
+		return 'Test Workers';
+	}
+
+
+	public function getLongVersion()
+	{
+		return "<info>{$this->getName()}</info> {$this->getVersion()}";
+	}
+
+
 	protected function getCommandName(InputInterface $input)
 	{
 		return self::DEFAULT_COMMAND;

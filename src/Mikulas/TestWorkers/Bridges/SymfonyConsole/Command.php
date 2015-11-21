@@ -25,6 +25,13 @@ class Command extends Console\Command\Command
 
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$files = $input->getArgument('files');
+		if (!$files) {
+			$input = new Console\Input\ArrayInput(['--help']);
+			$this->getApplication()->run($input, $output);
+			return 0;
+		}
+
 		$modeMap = [
 			'coverage-clover' => Controller::COVERAGE_CLOVER,
 			'coverage-crap4j' => Controller::COVERAGE_CRAP4J,
@@ -39,7 +46,7 @@ class Command extends Console\Command\Command
 		}
 
 		$controller = new Controller($output, $input->getOption('process-limit'));
-		return $controller->run($input->getArgument('files'), $input->getOption('whitelist'), $coverageModes);
+		return $controller->run($files, $input->getOption('whitelist'), $coverageModes);
 	}
 
 }
