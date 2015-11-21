@@ -87,6 +87,8 @@ class Controller
 	 */
 	public function run(array $filesToRun, array $whitelist = [], array $coverageModes = [])
 	{
+		$this->setupEnvironment();
+
 		$control = new ProcessManager(getmypid(), $this->processLimit);
 		$control->setDebugCallback(function($message) {
 			$this->debug($message);
