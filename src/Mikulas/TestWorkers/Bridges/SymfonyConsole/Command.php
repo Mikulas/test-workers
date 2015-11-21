@@ -32,9 +32,9 @@ class Command extends Console\Command\Command
 		];
 
 		$coverageModes = [];
-		foreach ($modeMap as list($option, $mode)) {
-			if ($input->hasOption($option)) {
-				$coverageModes[$mode] = $input->getOption($option);
+		foreach ($modeMap as $option => $mode) {
+			if ($file = $input->getOption($option)) {
+				$coverageModes[$mode] = $file;
 			}
 		}
 
