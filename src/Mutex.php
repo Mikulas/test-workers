@@ -7,6 +7,9 @@
 class Mutex
 {
 
+	const STD_OUT = __CLASS__ . '::stdout';
+
+
 	/** @var string */
 	private $dir;
 
@@ -24,21 +27,11 @@ class Mutex
 
 
 	/**
-	 * @param  callable $callback
-	 * @return mixed value returned by callback
-	 */
-	public function synchronizedStdOut(callable $callback)
-	{
-		return $this->synchronized('stdout', $callback);
-	}
-
-
-	/**
 	 * @param  mixed    $key
 	 * @param  callable $callback
 	 * @return mixed value returned by callback
 	 */
-	protected function synchronized($key, callable $callback)
+	public function synchronized($key, callable $callback)
 	{
 		$this->lock($key);
 

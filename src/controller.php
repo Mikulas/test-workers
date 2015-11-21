@@ -2,9 +2,16 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+define('PRINT_DEBUG', FALSE);
+define('MAX_PROCESSES', 50);
+define('COVERAGE_ENABLED', TRUE);
+
 $parent = getmypid();
 function debug($message) {
-	return;
+	if (!PRINT_DEBUG) {
+		return;
+	}
+
 	global $parent;
 	echo getmypid() . (getmypid() === $parent ? " \e[31mparent\e[0m: " : ' child: ') . "$message\n";
 }
@@ -15,8 +22,9 @@ ini_set('assert.exception', 1); // throw exceptions
 $filesToRun = $argv;
 array_shift($filesToRun);
 
-$control = new ProcessControl(getmypid(), 3);
+$control = new ProcessControl(getmypid(), MAX_PROCESSES);
 $mutex = new Mutex(sys_get_temp_dir());
+$collector = new CoverageCollector($mutex);
 
 if (PHP_SAPI !== 'phpdbg') {
 	echo "Expected phpdbg SAPI, run as\n";
@@ -31,12 +39,20 @@ if (version_compare(PHP_VERSION, '7.0.0RC7', '<')) {
 
 while ($file = array_shift($filesToRun)) {
 	if ($control->fork() === ProcessControl::CHILD) {
-		// child
 		debug("process '$file");
 		ob_start();
-		require_once $file;
+
+		if (COVERAGE_ENABLED) {
+			$collector->collect(function() use ($file) {
+				require_once $file;
+			}, $file);
+
+		} else {
+			require_once $file;
+		}
+
 		$output = ob_get_clean();
-		$mutex->synchronizedStdOut(function() use ($file, $output) {
+		$mutex->synchronized(Mutex::STD_OUT, function() use ($file, $output) {
 			echo "$file:\n";
 			echo "$output\n";
 		});
@@ -58,6 +74,9 @@ echo $counter[ProcessControl::CODE_SKIP] . " skipped tests\n";
 echo $counter[ProcessControl::CODE_SUCCESS] . " tests passed\n";
 
 debug("exit");
+
+var_dump($collector->getCoverages());
+$collector->destroy();
 
 if ($counter[ProcessControl::CODE_FAIL] !== 0) {
 	exit(1);

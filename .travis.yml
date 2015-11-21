@@ -14,3 +14,4 @@ install:
 
 script:
   - tests/cases/controller.sh
+  - php tests/cases/SharedVariableTest.sh
