@@ -1,0 +1,13 @@
+{
+    "name": "mikulas/test-workers",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mikulas Dite",
+            "email": "mikulas.dite@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {}
+}
