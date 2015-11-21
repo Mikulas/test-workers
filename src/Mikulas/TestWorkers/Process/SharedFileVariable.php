@@ -1,5 +1,7 @@
 <?php
 
+namespace Mikulas\TestWorkers;
+
 
 class SharedFileVariable implements ISharedVariable
 {

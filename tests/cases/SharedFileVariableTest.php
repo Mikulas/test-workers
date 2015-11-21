@@ -1,5 +1,11 @@
 <?php
 
+namespace Mikulas\TestWorkers\Tests;
+
+use Mikulas\TestWorkers\Mutex;
+use Mikulas\TestWorkers\SharedFileVariable;
+
+
 ini_set('zend.assertions', 1); // generate and execute code
 ini_set('assert.exception', 1); // throw exceptions
 
@@ -51,17 +57,17 @@ if ($childPid) {
 
 	try {
 		$shared->destroy();
-	} catch (AssertionError $e) {}
+	} catch (\AssertionError $e) {}
 	assert($e !== NULL, 'SharedVariable::destroy must throw after call to destroy()');
 
 	try {
 		$shared->get();
-	} catch (AssertionError $e) {}
+	} catch (\AssertionError $e) {}
 	assert($e !== NULL, 'SharedVariable::get must throw after call to destroy()');
 
 	try {
 		$shared->set([1]);
-	} catch (AssertionError $e) {}
+	} catch (\AssertionError $e) {}
 	assert($e !== NULL, 'SharedVariable::save must throw after call to destroy()');
 
 	//echo "parent exit\n";

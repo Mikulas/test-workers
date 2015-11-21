@@ -14,7 +14,7 @@ install:
 
 script:
   - tests/cases/controller.sh
-  - phpdbg -qrr src/controller.php $(find tests/cases -name "*.php")
+  - bin/test-workers $(find tests/cases -name "*.php")
 
 after_script:
   - if [ "$TRAVIS_PHP_VERSION" == "7.0" ]; then composer require satooshi/php-coveralls --prefer-dist --no-progress --no-interaction; fi

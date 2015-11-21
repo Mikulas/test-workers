@@ -1,24 +1,30 @@
 <?php
 
+namespace Mikulas\TestWorkers;
+
+use Mikulas\TestWorkers\Bridges\PHPUnit\TestCaseBridge;
+use PHP_CodeCoverage as CodeCoverage;
+use PHP_CodeCoverage_Filter as CodeCoverageFilter;
+
 
 class PhpUnitCoverageFactory
 {
 
 	/**
 	 * @param array [fileId => coverages]
-	 * @return PHP_CodeCoverage
+	 * @return CodeCoverage
 	 */
 	public static function create(array $coverages)
 	{
-		$filter = new PHP_CodeCoverage_Filter();
+		$filter = new CodeCoverageFilter();
 		$filter->addDirectoryToWhitelist(dirname(__DIR__) . '/src'); // TODO
 
-		$coverage = new PHP_CodeCoverage(new PHP_CodeCoverage_Driver_PHPDBG(), $filter);
+		$coverage = new CodeCoverage(NULL, $filter);
 		$coverage->setForceCoversAnnotation(FALSE);
 		$coverage->setCheckForUnintentionallyCoveredCode(FALSE);
 
 		foreach ($coverages as $testId => list($status, $lines)) {
-			$case = new PHPUnit_Framework_TestCase_Bridge($testId, $status);
+			$case = new TestCaseBridge($testId, $status);
 			$coverage->append($lines, $case, TRUE);
 		}
 

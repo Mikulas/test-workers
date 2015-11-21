@@ -1,5 +1,8 @@
 <?php
 
+namespace Mikulas\TestWorkers;
+
+
 /**
  * @author Jan Tvrdík
  * @author Mikulas Dite

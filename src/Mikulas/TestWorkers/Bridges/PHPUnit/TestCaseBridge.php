@@ -1,13 +1,21 @@
 <?php
 
+namespace Mikulas\TestWorkers\Bridges\PHPUnit;
 
-class PHPUnit_Framework_TestCase_Bridge extends PHPUnit_Framework_TestCase
+use PHPUnit_Framework_TestCase as TestCase;
+
+
+class TestCaseBridge extends TestCase
 {
 
 	/** @var int */
 	private $status;
 
 
+	/**
+	 * @param string  $testId
+	 * @param int     $status
+	 */
 	public function __construct($testId, $status)
 	{
 		parent::__construct($testId);
@@ -15,10 +23,12 @@ class PHPUnit_Framework_TestCase_Bridge extends PHPUnit_Framework_TestCase
 	}
 
 
+	/**
+	 * @return int
+	 */
 	public function getStatus()
 	{
 		return $this->status;
 	}
-
 
 }

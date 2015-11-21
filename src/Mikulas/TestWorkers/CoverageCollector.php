@@ -1,5 +1,11 @@
 <?php
 
+namespace Mikulas\TestWorkers;
+
+use PHP_CodeCoverage_Driver_PHPDBG as PhpDbgDriver;
+use PHPUnit_Runner_BaseTestRunner as TestRunner;
+
+
 class CoverageCollector
 {
 
@@ -13,7 +19,6 @@ class CoverageCollector
 	public function __construct(Mutex $mutex)
 	{
 		$this->mutex = $mutex;
-//		$this->data = new SharedMemoryVariable($mutex, 50000, []); // TODO fix size
 		$this->data = new SharedFileVariable($mutex, []);
 	}
 
@@ -24,19 +29,19 @@ class CoverageCollector
 	 */
 	public function collect(callable $cb, $testId)
 	{
-		$driver = new PHP_CodeCoverage_Driver_PHPDBG();
+		$driver = new PhpDbgDriver();
 		$driver->start();
 
 		try {
-			$status = PHPUnit_Runner_BaseTestRunner::STATUS_PASSED;
 			$cb();
+			$status = TestRunner::STATUS_PASSED;
 
-		} catch (AssertionError $e) {
-			$status = PHPUnit_Runner_BaseTestRunner::STATUS_FAILURE;
+		} catch (\AssertionError $e) {
+			$status = TestRunner::STATUS_FAILURE;
 			throw $e;
 
-		} catch (Error $e) {
-			$status = PHPUnit_Runner_BaseTestRunner::STATUS_ERROR;
+		} catch (\Error $e) {
+			$status = TestRunner::STATUS_ERROR;
 			throw $e;
 
 		} finally {
@@ -49,6 +54,8 @@ class CoverageCollector
 				$this->data->set($coverages);
 			});
 		}
+
+		return $status;
 	}
 
 

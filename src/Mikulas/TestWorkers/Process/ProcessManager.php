@@ -1,7 +1,9 @@
 <?php
 
+namespace Mikulas\TestWorkers;
 
-class ProcessControl
+
+class ProcessManager
 {
 
 	/** @var int microseconds */
@@ -37,6 +39,9 @@ class ProcessControl
 	/** @var int[] */
 	private $counter = [self::CODE_SUCCESS => 0, self::CODE_SKIP => 0, self::CODE_FAIL => 0];
 
+	/** @var callable */
+	private $debugCallback;
+
 
 	public function __construct(int $parentPID, int $childLimit = 10)
 	{
@@ -47,14 +52,14 @@ class ProcessControl
 
 
 	/**
-	 * @return ProcessControl::PARENT|self::CHILD
+	 * @return ProcessManager::PARENT|self::CHILD
 	 */
 	public function fork() : int
 	{
 		assert(getmypid() === $this->allowedPID, 'Fork only allowed from original parent process');
 
 		while (count($this->children) >= $this->childLimit) {
-			debug("waiting for any child to report status\n");
+			$this->debug("waiting for any child to report status\n");
 			pcntl_wait($status, WUNTRACED);
 			$this->collectStatus();
 		}
@@ -84,18 +89,18 @@ class ProcessControl
 			assert($ret !== -1, "Collect status failed, count not get status of '$childPID'");
 
 			if ($ret === 0) {
-				debug("$childPID is still alive");
+				$this->debug("$childPID is still alive");
 				continue;
 			}
 
-			debug("$childPID is dead");
+			$this->debug("$childPID is dead");
 			assert(pcntl_wifexited($status));
 			switch (pcntl_wexitstatus($status)) {
 				case self::CODE_SUCCESS:
 					$this->counter[self::CODE_SUCCESS]++;
 					break;
-				case self::CODE_FAIL:
-					$this->counter[self::CODE_FAIL]++;
+				case self::CODE_SKIP:
+					$this->counter[self::CODE_SKIP]++;
 					break;
 				default:
 					$this->counter[self::CODE_FAIL]++;
@@ -129,6 +134,26 @@ class ProcessControl
 	public function getCounter() : array
 	{
 		return $this->counter;
+	}
+
+
+	/**
+	 * @param callable $callback
+	 */
+	public function setDebugCallback(callable $callback)
+	{
+		$this->debugCallback = $callback;
+	}
+
+
+	/**
+	 * @param string $message
+	 */
+	protected function debug($message)
+	{
+		if ($cb = $this->debugCallback) {
+			$cb($message);
+		}
 	}
 
 }

@@ -13,7 +13,7 @@ function assert {
 }
 
 function controller {
-	phpdbg -qrr "$ROOT"/src/controller.php "$@"
+	phpdbg -qrr "$ROOT"/bin/test-workers "$@"
 }
 
 OUTPUT="$(controller "$ROOT"/tests/examples/success.php)"
