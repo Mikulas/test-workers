@@ -15,7 +15,7 @@ install:
 
 script:
   - tests/cases/controller.sh
-  - phpdbg -qrr bin/test-workers $(find tests/cases -name "*.php")
+  - phpdbg -qrr bin/test-workers --coverage-clover=phpunit.xml.dist --whitelist=src $(find tests/cases -name "*.php")
 
 after_script:
   - stages/ci/push-coveralls.sh

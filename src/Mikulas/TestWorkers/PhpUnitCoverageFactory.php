@@ -64,7 +64,7 @@ class PhpUnitCoverageFactory
 			$fqn = preg_replace('~\(.*\)$~', '', $fqn);
 
 			try {
-				$ref = strpos($fqn, '::') !== NULL ? new \ReflectionMethod($fqn) : new \ReflectionClass($fqn);
+				$ref = strpos($fqn, '::') !== FALSE ? new \ReflectionMethod($fqn) : new \ReflectionClass($fqn);
 			} catch (\ReflectionException $e) {
 				echo "\e[31mInvalid @covers annotation: {$e->getMessage()}\e[0m\n";
 				// TODO HANDLE PROPERLY
@@ -72,7 +72,7 @@ class PhpUnitCoverageFactory
 			}
 
 			for ($line = $ref->getStartLine(); $line < $ref->getEndLine(); ++$line) {
-				$result[$ref->getFileName()][$line] = TRUE;
+				$result[$ref->getFileName()][$line] = $line;
 			}
  		}
 

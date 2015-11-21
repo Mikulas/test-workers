@@ -3,12 +3,11 @@
 namespace Mikulas\TestWorkers\Tests;
 
 use Mikulas\TestWorkers\AnnotationParser;
+require __DIR__ . '/../boostrap.php';
 
-
-ini_set('zend.assertions', 1); // generate and execute code
-ini_set('assert.exception', 1); // throw exceptions
-
-require __DIR__ . '/../../vendor/autoload.php';
+/**
+ * @covers AnnotationParser
+ */
 
 $file = __DIR__ . '/../fixtures/usings.php';
 
