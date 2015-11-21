@@ -9,13 +9,13 @@ cache:
         - "$HOME/.composer/cache"
 
 install:
+  - phpenv config-rm xdebug.ini || true
   - travis_retry composer self-update --no-progress --no-interaction
   - travis_retry composer install --prefer-dist --no-dev --no-progress --classmap-authoritative --no-interaction
 
 script:
   - tests/cases/controller.sh
-  - bin/test-workers $(find tests/cases -name "*.php")
+  - phpdbg -qrr bin/test-workers $(find tests/cases -name "*.php")
 
 after_script:
-  - if [ "$TRAVIS_PHP_VERSION" == "7.0" ]; then composer require satooshi/php-coveralls --prefer-dist --no-progress --no-interaction; fi
-  - if [ "$TRAVIS_PHP_VERSION" == "7.0" ]; then php vendor/bin/coveralls; fi
+  - stages/ci/push-coveralls.sh
