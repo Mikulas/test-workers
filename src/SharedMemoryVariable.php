@@ -1,7 +1,7 @@
 <?php
 
 
-class SharedVariable
+class SharedMemoryVariable implements ISharedVariable
 {
 
 	/** @var int position */
@@ -37,10 +37,15 @@ class SharedVariable
 		$this->mutex = $mutex;
 
 		$shmKey = ftok(__FILE__, 't');
+
+		if (@$oldId = shmop_open($shmKey, 'a', 0644, 0)) {
+			shmop_delete($oldId);
+		}
+
 		$this->shmId = shmop_open($shmKey, 'c', 0644, $bytesToAllocate);
 		assert($this->shmId, "Could not create shared memory segment");
 
-		$this->save($initValue);
+		$this->set($initValue);
 	}
 
 
@@ -70,14 +75,12 @@ class SharedVariable
 	 * @param mixed $variable serializable
 	 * @return void
 	 */
-	public function save($variable)
+	public function set($variable)
 	{
 		assert(!$this->destroyed);
 		$this->mutex->synchronized([__CLASS__, $this->shmId], function() use ($variable) {
 			$memory = serialize($variable);
-			var_dump($memory);
 			$written = shmop_write($this->shmId, $memory, self::MEMORY_OFFSET);
-			var_dump($written);
 			assert($written !== FALSE && $written === strlen($memory), 'Could not write to shared memory');
 
 			$size = serialize(strlen($memory));

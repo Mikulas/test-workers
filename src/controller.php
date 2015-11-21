@@ -75,8 +75,16 @@ echo $counter[ProcessControl::CODE_SUCCESS] . " tests passed\n";
 
 debug("exit");
 
-var_dump($collector->getCoverages());
+echo "Generating code coverage report\n";
+
+$phpUnitCoverage = PhpUnitCoverageFactory::create($collector->getCoverages());
 $collector->destroy();
+
+$writer = new PHP_CodeCoverage_Report_Clover;
+$writer->process($phpUnitCoverage, '/tmp/clover.xml');
+
+$writer = new PHP_CodeCoverage_Report_HTML;
+$writer->process($phpUnitCoverage, '/tmp/code-coverage-report');
 
 if ($counter[ProcessControl::CODE_FAIL] !== 0) {
 	exit(1);

@@ -6,7 +6,7 @@ ini_set('assert.exception', 1); // throw exceptions
 require __DIR__ . '/../../vendor/autoload.php';
 
 $mutex = new Mutex(sys_get_temp_dir());
-$shared = new SharedVariable($mutex, 100, []);
+$shared = new SharedMemoryVariable($mutex, 100, []);
 
 $childPid = pcntl_fork();
 assert($childPid !== -1, 'Fork failed');

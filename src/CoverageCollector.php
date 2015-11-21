@@ -6,15 +6,15 @@ class CoverageCollector
 	/** @var Mutex */
 	private $mutex;
 
-	/** @var SharedVariable of [mixed $fileId => array $coverage] */
+	/** @var ISharedVariable of [mixed $fileId => [$status, $coverage]] */
 	private $data;
 
 
 	public function __construct(Mutex $mutex)
 	{
 		$this->mutex = $mutex;
-
-		$this->data = new SharedVariable($mutex, 50 * 1024 * 1024, []);
+//		$this->data = new SharedMemoryVariable($mutex, 50000, []); // TODO fix size
+		$this->data = new SharedFileVariable($mutex, []);
 	}
 
 
@@ -24,25 +24,34 @@ class CoverageCollector
 	 */
 	public function collect(callable $cb, $testId)
 	{
-		phpdbg_start_oplog();
+		$driver = new PHP_CodeCoverage_Driver_PHPDBG();
+		$driver->start();
+
 		try {
+			$status = PHPUnit_Runner_BaseTestRunner::STATUS_PASSED;
 			$cb();
+
+		} catch (AssertionError $e) {
+			$status = PHPUnit_Runner_BaseTestRunner::STATUS_FAILURE;
+
+		} catch (Error $e) {
+			$status = PHPUnit_Runner_BaseTestRunner::STATUS_ERROR;
+
 		} finally {
-			$coverage = phpdbg_end_oplog(['functions' => TRUE]);
-			$this->mutex->synchronized(__CLASS__, function() use ($coverage, $testId) {
+			$coverage = $driver->stop();
+			$this->mutex->synchronized(__CLASS__, function() use ($coverage, $testId, $status) {
 				$coverages = $this->data->get();
 
 				assert(!isset($coverages[$testId]), "TestId '$testId' is not unique");
-				var_dump('COLLECT OF ', $testId, $coverage);
-				$coverages[$testId] = $coverage;
-				$this->data->save($coverages);
+				$coverages[$testId] = [$status, $coverage];
+				$this->data->set($coverages);
 			});
 		}
 	}
 
 
 	/**
-	 * @return array [testId => coverage]
+	 * @return array [testId => [status, coverage]]
 	 */
 	public function getCoverages()
 	{
