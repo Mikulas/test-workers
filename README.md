@@ -8,5 +8,7 @@ PHP 7 alternative to PHPUnit, Nette Tester and other tools.
 Features
 ========
 
-- Tests directly executable
 - Parallel test execution
+- Tests directly executable
+- Minimal footprint: your test files can be as simple as `<?php assert(TRUE);`
+- Extremely fast: preload option in combination with forking processes and memory sharing removes overhead of loading dependencies for each test
