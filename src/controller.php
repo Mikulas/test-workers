@@ -2,25 +2,32 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+$parent = getmypid();
+function debug($message) {
+	global $parent;
+	echo getmypid() . (getmypid() === $parent ? " \e[31mparent\e[0m: " : ' child: ') . "$message\n";
+}
+
+
 $filesToRun = $argv;
 array_shift($filesToRun);
 
-$control = new ProcessControl(getmypid(), 2);
+$control = new ProcessControl(getmypid(), 3);
 
 while ($file = array_shift($filesToRun)) {
 	if ($control->fork() === ProcessControl::CHILD) {
 		// child
-		echo "child: process '$file'\n";
+		debug("process '$file");
 		sleep(1);
-		echo "child exit\n";
+		debug("exit");
 		die;
 
 	} else {
-		echo "parent: loop\n";
+		debug("loop");
 		continue;
 	}
 }
 
 // only parent will get here
 pcntl_wait($status); // protect against zombie children
-echo "parent exit\n";
+debug("exit");
