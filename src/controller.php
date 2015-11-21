@@ -32,5 +32,5 @@ while ($file = array_shift($filesToRun)) {
 }
 
 // only parent will get here
-$control->collect();
+$control->waitForChildren();
 debug("exit");

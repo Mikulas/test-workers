@@ -5,6 +5,9 @@ use Ardent\Collection\AvlTree;
 class ProcessControl
 {
 
+	/** @var int microseconds */
+	const FAILSAFE_TIMEOUT = 90 * 1e6;
+
 	/** @var int */
 	const PARENT = -2;
 
@@ -15,7 +18,7 @@ class ProcessControl
 	/** @var int */
 	private $allowedPID;
 
-	/** @var int[] pids */
+	/** @var int[] pids as keys */
 	private $children;
 
 	/** @var int */
@@ -26,7 +29,7 @@ class ProcessControl
 	{
 		$this->allowedPID = $parentPID;
 		$this->childLimit = $childLimit;
-		$this->children = new AvlTree();
+		$this->children = [];
 	}
 
 
@@ -38,9 +41,8 @@ class ProcessControl
 		assert(getmypid() === $this->allowedPID, 'Fork only allowed from original parent process');
 
 		while (count($this->children) >= $this->childLimit) {
-			echo "waiting for child to exit\n";
-			$exitedChild = pcntl_wait($status, WUNTRACED);
-			assert($exitedChild !== -1, 'No child remaining, but $children not cleared');
+			debug("waiting for any child to report status\n");
+			pcntl_wait($status, WUNTRACED);
 			$this->collectStatus();
 		}
 
@@ -51,34 +53,46 @@ class ProcessControl
 			return self::CHILD;
 
 		} else {
-			$this->children->add($childPid);
+			$this->children[$childPid] = TRUE;
 			return self::PARENT;
 		}
 	}
 
 
+	/**
+	 * Removes $children PIDs that have exited
+	 */
 	protected function collectStatus()
 	{
-//		assert(getmypid() === $this->allowedPID, 'Collect status only allowed from original parent process');
-//
-//		foreach ($this->children as $childPID) {
-//			pcntl_wait($childPID, WNOHANG)
-//		}
+		assert(getmypid() === $this->allowedPID, 'Collect status only allowed from original parent process');
+
+		foreach ($this->children as $childPID => $_) {
+			$ret = pcntl_waitpid($childPID, $status, WNOHANG);
+			assert($ret !== -1, "Collect status failed, count not get status of '$childPID'");
+
+			if ($ret !== 0) {
+				debug("$childPID is dead");
+				unset($this->children[$childPID]);
+			} else {
+				debug("$childPID is still alive");
+			}
+		}
 	}
 
 
-	public function collect()
+	/**
+	 * Blocks until all children have exited
+	 */
+	public function waitForChildren()
 	{
-		$failsafe = 100;
-		while ($this->children->count() !== 0) {
-			echo "COLLECT waiting for child to exit\n";
-			$exitedChild = pcntl_wait($status, WUNTRACED);
-			assert($exitedChild !== -1, 'No child remaining, but $children not cleared');
+		$step = 2e5; // 200 ms
+		$failsafe = self::FAILSAFE_TIMEOUT / $step;
 
-			var_dumP("remove $exitedChild");
-			$this->children->remove($exitedChild);
+		while (count($this->children) !== 0) {
+			$this->collectStatus();
+			usleep($step);
 
-			assert(--$failsafe < 0, 'Failed to collect child processes');
+			assert(--$failsafe > 0, 'Failed to collect child processes');
 		}
 	}
 
