@@ -1,0 +1,75 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "ecd2c91cbae179b786e6fbf3cc1b33b8",
+    "content-hash": "c2825793b12e69c080241455970dbdbb",
+    "packages": [
+        {
+            "name": "morrisonlevi/ardent",
+            "version": "0.20.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/morrisonlevi/Ardent.git",
+                "reference": "e04c5739d897f6a485340f2527ffd411dd811eaf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/morrisonlevi/Ardent/zipball/e04c5739d897f6a485340f2527ffd411dd811eaf",
+                "reference": "e04c5739d897f6a485340f2527ffd411dd811eaf",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.20-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/Collection/function.php"
+                ],
+                "psr-4": {
+                    "Ardent\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Levi Morrison",
+                    "email": "levim@php.net",
+                    "homepage": "http://morrisonlevi.github.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A healthy library for PHP",
+            "homepage": "https://github.com/morrisonlevi/Ardent",
+            "keywords": [
+                "algorithms",
+                "ardent",
+                "collections",
+                "data structures",
+                "library",
+                "php",
+                "spl"
+            ],
+            "time": "2015-11-13 21:22:40"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": []
+}

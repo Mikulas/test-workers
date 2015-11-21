@@ -1,5 +1,7 @@
 <?php
 
+use Ardent\Collection\AvlTree;
+
 class ProcessControl
 {
 
@@ -13,13 +15,18 @@ class ProcessControl
 	/** @var int */
 	private $allowedPID;
 
-	/** @var int[] */
+	/** @var AvlTree */
 	private $children;
 
+	/** @var int */
+	private $childLimit;
 
-	public function __construct($parentPID)
+
+	public function __construct($parentPID, $childLimit = 10)
 	{
 		$this->allowedPID = $parentPID;
+		$this->childLimit = $childLimit;
+		$this->children = new AvlTree();
 	}
 
 
@@ -30,6 +37,12 @@ class ProcessControl
 	{
 		assert(getmypid() === $this->allowedPID, 'Fork only allowed from original parent process');
 
+		while ($this->children->count() >= $this->childLimit) {
+			echo "waiting for child to exit\n";
+			$exitedChild = pcntl_wait($status, WUNTRACED);
+			$this->children->remove($exitedChild);
+		}
+
 		$childPid = pcntl_fork();
 		assert($childPid !== -1, 'Fork failed');
 
@@ -37,7 +50,7 @@ class ProcessControl
 			return self::CHILD;
 
 		} else {
-			$this->children[] = $childPid;
+			$this->children->add($childPid);
 			return self::PARENT;
 		}
 	}

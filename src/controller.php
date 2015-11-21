@@ -2,17 +2,16 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-define('MAX_CONCURRENCY', 20);
-
 $filesToRun = $argv;
 array_shift($filesToRun);
 
-$control = new ProcessControl(getmypid());
+$control = new ProcessControl(getmypid(), 2);
 
 while ($file = array_shift($filesToRun)) {
 	if ($control->fork() === ProcessControl::CHILD) {
 		// child
 		echo "child: process '$file'\n";
+		sleep(1);
 		echo "child exit\n";
 		die;
 
