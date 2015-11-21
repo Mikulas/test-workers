@@ -23,8 +23,11 @@ class ProcessManager
 	/** @var int */
 	const CODE_SKIP = 126;
 
-	/** @var int */
-	const CODE_FAIL = -1; // any other code that is not CODE_SUCCESS or CODE_SKIP
+	/** @var int tests were not even run properly */
+	const CODE_ERROR = 127;
+
+	/** @var int tests run successfully but failed */
+	const CODE_FAIL = -1; // any other unused code
 
 
 	/** @var int */

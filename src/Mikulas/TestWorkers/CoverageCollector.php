@@ -3,7 +3,6 @@
 namespace Mikulas\TestWorkers;
 
 use PHP_CodeCoverage_Driver_PHPDBG as PhpDbgDriver;
-use PHPUnit_Runner_BaseTestRunner as TestRunner;
 
 
 class CoverageCollector
@@ -62,23 +61,23 @@ class CoverageCollector
 
 		try {
 			$cb();
-			$status = TestRunner::STATUS_PASSED;
+			$status = ProcessManager::CODE_SUCCESS;
 
 		} catch (\AssertionError $e) {
-			$status = TestRunner::STATUS_FAILURE;
+			$status = ProcessManager::CODE_FAIL;
 			throw $e;
 
 		} catch (\Error $e) {
-			$status = TestRunner::STATUS_ERROR;
+			$status = ProcessManager::CODE_ERROR;
 			throw $e;
 
 		} finally {
 			$coverage = $driver->stop();
-			$this->mutex->synchronized(__CLASS__, function() use ($coverage, $testId, $status, $covers) {
+			$this->mutex->synchronized(__CLASS__, function() use ($coverage, $testId, $covers) {
 				$coverages = $this->data->get();
 
 				assert(!isset($coverages[$testId]), "TestId '$testId' is not unique");
-				$coverages[$testId] = [$status, $coverage, $covers];
+				$coverages[$testId] = [$coverage, $covers];
 				$this->data->set($coverages);
 			});
 		}

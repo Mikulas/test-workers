@@ -42,10 +42,9 @@ class PhpUnitCoverageFactory
 		$coverage->setForceCoversAnnotation(FALSE);
 		$coverage->setCheckForUnintentionallyCoveredCode(FALSE);
 
-		foreach ($coverages as $testId => list($status, $lines, $covers)) {
+		foreach ($coverages as $testId => list($lines, $covers)) {
 			$linesToBeCovered = $this->getCoveredLines($covers);
-			$case = new TestCaseBridge($testId, $status);
-			$coverage->append($lines, $case, TRUE, $linesToBeCovered);
+			$coverage->append($lines, $testId, TRUE, $linesToBeCovered);
 		}
 
 		return $coverage;
