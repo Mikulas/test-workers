@@ -1,7 +1,9 @@
 <?php
 
+use Mikulas\TestWorkers\Tests\Model;
+
 /**
- * @covers Model::a
+ * @covers XModel::a
  */
 
 require_once __DIR__ . '/../../vendor/autoload.php';

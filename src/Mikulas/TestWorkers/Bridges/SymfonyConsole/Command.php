@@ -18,7 +18,7 @@ class Command extends Console\Command\Command
 			->addOption('coverage-clover', NULL, Console\Input\InputOption::VALUE_REQUIRED, 'Generate code coverage report in Clover XML format.')
 			->addOption('coverage-crap4j', NULL, Console\Input\InputOption::VALUE_REQUIRED, 'Generate code coverage report in Crap4J XML format.')
 			->addOption('coverage-html', NULL, Console\Input\InputOption::VALUE_REQUIRED, 'Generate code coverage report in HTML format.')
-			->addOption('whitelist', NULL, Console\Input\InputOption::VALUE_REQUIRED, 'Whitelist for code coverage analysis.')
+			->addOption('whitelist', 'w', Console\Input\InputOption::VALUE_OPTIONAL|Console\Input\InputOption::VALUE_IS_ARRAY, 'Whitelist for code coverage analysis.')
 			->addArgument('files', Console\Input\InputArgument::IS_ARRAY, 'Files to execute');
 	}
 
@@ -38,8 +38,8 @@ class Command extends Console\Command\Command
 			}
 		}
 
-		$controller = new Controller($output);
-		return $controller->run($input->getArgument('files'), $input->getOption('process-limit'), $coverageModes);
+		$controller = new Controller($output, $input->getOption('process-limit'));
+		return $controller->run($input->getArgument('files'), $input->getOption('whitelist'), $coverageModes);
 	}
 
 }

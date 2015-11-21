@@ -147,6 +147,7 @@ class AnnotationParser
 
 		$tokens = $this->getTokens($file);
 		$max = count($tokens);
+		$namespace = NULL;
 		for ($pos = 0; $pos < $max; ++$pos) {
 			list($type, $content) = is_array($tokens[$pos]) ? $tokens[$pos] : [NULL, $tokens[$pos]];
 

@@ -50,10 +50,12 @@ class CoverageCollector
 
 
 	/**
-	 * @param callable $cb
-	 * @param string   $testId file name or other unique identificator
+	 * @param callable      $cb
+	 * @param string|string $testId file name or other unique identificator
+	 * @param array         $covers [string $fqn]
+	 * @return int
 	 */
-	public function collect(callable $cb, $testId)
+	public function collect(callable $cb, string $testId, $covers = [])
 	{
 		$driver = new PhpDbgDriver();
 		$driver->start();
@@ -72,11 +74,11 @@ class CoverageCollector
 
 		} finally {
 			$coverage = $driver->stop();
-			$this->mutex->synchronized(__CLASS__, function() use ($coverage, $testId, $status) {
+			$this->mutex->synchronized(__CLASS__, function() use ($coverage, $testId, $status, $covers) {
 				$coverages = $this->data->get();
 
 				assert(!isset($coverages[$testId]), "TestId '$testId' is not unique");
-				$coverages[$testId] = [$status, $coverage];
+				$coverages[$testId] = [$status, $coverage, $covers];
 				$this->data->set($coverages);
 			});
 		}

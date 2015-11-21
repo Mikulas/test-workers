@@ -22,13 +22,17 @@ class Controller
 	/** @var OutputInterface */
 	private $output;
 
+	/** @var int */
+	private $processLimit;
 
-	public function __construct(OutputInterface $output)
+
+	public function __construct(OutputInterface $output, int $processLimit)
 	{
 		$this->setStyles($output);
 
 		$this->parentPID = getmypid();
 		$this->output = $output;
+		$this->processLimit = $processLimit;
 	}
 
 
@@ -77,15 +81,13 @@ class Controller
 
 	/**
 	 * @param string[] $filesToRun
-	 * @param int      $processLimit
+	 * @param string[] $whitelist
 	 * @param string[] $coverageModes
 	 * @return int exit code
 	 */
-	public function run(array $filesToRun, int $processLimit, array $coverageModes = [])
+	public function run(array $filesToRun, array $whitelist = [], array $coverageModes = [])
 	{
-		$this->setupEnvironment();
-
-		$control = new ProcessManager(getmypid(), $processLimit);
+		$control = new ProcessManager(getmypid(), $this->processLimit);
 		$control->setDebugCallback(function($message) {
 			$this->debug($message);
 		});
@@ -102,12 +104,9 @@ class Controller
 				try {
 					if ($coverageModes) {
 						$covers = $collector->covers($file);
-						echo "this file covers:\n";
-						var_dump($covers);
-
 						$collector->collect(function() use ($file) {
 							require_once $file;
-						}, $file);
+						}, $file, $covers);
 
 					} else {
 						require_once $file;
@@ -149,7 +148,8 @@ class Controller
 		if ($coverageModes) {
 			echo "Generating code coverage report\n";
 
-			$phpUnitCoverage = PhpUnitCoverageFactory::create($collector->getCoverages());
+			$factory = new PhpUnitCoverageFactory($whitelist);
+			$phpUnitCoverage = $factory->create($collector->getCoverages());
 			$collector->destroy();
 
 			foreach ($coverageModes as $mode => $option) {
