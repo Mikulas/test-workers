@@ -27,7 +27,7 @@ assert "$?" "1" "Exit code with failed test should be non-zero" "$OUTPUT"
 diff <(php "$ROOT"/tests/examples/with-setup.php) <(cat "$ROOT"/tests/fixtures/setup-raw.txt)
 assert "$?" "0" "Running test with setup directly failed" ""
 
-diff <(controller --setup="$ROOT"/tests/examples/setup.php "$ROOT"/tests/examples/with-setup.php | head -4 | sed 2d) <(cat "$ROOT"/tests/fixtures/setup-preload.txt)
+diff <(controller --setup="$ROOT"/tests/examples/setup.php "$ROOT"/tests/examples/with-setup.php "$ROOT"/tests/examples/with-setup.php | head -1 ) <(cat "$ROOT"/tests/fixtures/setup-preload.txt)
 assert "$?" "0" "Running test with setup directly failed" ""
 
 OUTPUT="$(controller --setup=foo tests/*)"
