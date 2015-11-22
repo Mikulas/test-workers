@@ -214,6 +214,7 @@ class Controller
 		$success = $counter[ProcessManager::CODE_SUCCESS];
 		$failed = $counter[ProcessManager::CODE_FAIL];
 		$skipped = $counter[ProcessManager::CODE_SKIP];
+		$errored = $counter[ProcessManager::CODE_ERROR];
 
 		$s = function($count) {
 			return $count > 1 ? 's' : '';
@@ -226,6 +227,9 @@ class Controller
 			$this->output->writeln("<info>$success test{$s($success)} succeeded</info>");
 		}
 
+		if ($errored) {
+			$this->output->writeln("<error>$errored test{$s($errored)} errored</error>");
+		}
 		if ($skipped) {
 			$this->output->writeln("<comment>$skipped test{$s($failed)} skipped</comment>");
 		}

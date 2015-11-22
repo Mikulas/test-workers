@@ -40,7 +40,12 @@ class ProcessManager
 	private $childLimit;
 
 	/** @var int[] */
-	private $counter = [self::CODE_SUCCESS => 0, self::CODE_SKIP => 0, self::CODE_FAIL => 0];
+	private $counter = [
+		self::CODE_SUCCESS => 0,
+		self::CODE_SKIP => 0,
+		self::CODE_FAIL => 0,
+		self::CODE_ERROR => 0,
+	];
 
 	/** @var callable */
 	private $debugCallback;
@@ -98,12 +103,11 @@ class ProcessManager
 
 			$this->debug("$childPID is dead");
 			assert(pcntl_wifexited($status));
-			switch (pcntl_wexitstatus($status)) {
+			switch ($status = pcntl_wexitstatus($status)) {
 				case self::CODE_SUCCESS:
-					$this->counter[self::CODE_SUCCESS]++;
-					break;
 				case self::CODE_SKIP:
-					$this->counter[self::CODE_SKIP]++;
+				case self::CODE_ERROR:
+					$this->counter[$status]++;
 					break;
 				default:
 					$this->counter[self::CODE_FAIL]++;
