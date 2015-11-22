@@ -3,4 +3,4 @@
 echo "setup included\n";
 
 // mocked return for --setup test
-return 'setup content';
+return "setup content";

@@ -31,6 +31,12 @@ class Controller
 	/** @var string[] filenames */
 	private $whitelist;
 
+	/** @var Mutex */
+	private $mutex;
+
+	/** @var CoverageCollector */
+	private $collector;
+
 
 	public function __construct(OutputInterface $output, int $processLimit)
 	{
@@ -39,6 +45,9 @@ class Controller
 		$this->parentPID = getmypid();
 		$this->output = $output;
 		$this->processLimit = $processLimit;
+
+		$this->mutex = new Mutex(sys_get_temp_dir());
+		$this->collector = new CoverageCollector($this->mutex);
 	}
 
 
@@ -97,6 +106,21 @@ class Controller
 
 
 	/**
+	 * @param string $setupFile
+	 */
+	protected function createSetupGlobal(string $setupFile)
+	{
+		global $_SETUP;
+		if (!is_readable($setupFile)) {
+			$this->output->writeln("<error>Setup file '$setupFile' is not readable\n");
+			exit(1);
+		}
+
+		$_SETUP = require_once $setupFile;
+	}
+
+
+	/**
 	 * @param string[] $filesToRun
 	 * @param string   $setupFile
 	 * @return int exit code
@@ -105,14 +129,8 @@ class Controller
 	{
 		$this->setupEnvironment();
 
-		global $_SETUP;
 		if ($setupFile) {
-			if (!is_readable($setupFile)) {
-				$this->output->writeln("<error>Setup file '$setupFile' is not readable\n");
-				exit(1);
-			}
-
-			$_SETUP = require_once $setupFile;
+			$this->createSetupGlobal($setupFile);
 		}
 
 		$control = new ProcessManager(getmypid(), $this->processLimit);
@@ -120,46 +138,16 @@ class Controller
 			$this->debug($message);
 		});
 
-		$mutex = new Mutex(sys_get_temp_dir());
-		$collector = new CoverageCollector($mutex);
-
 		while ($file = array_shift($filesToRun)) {
 			if ($control->fork() === ProcessManager::CHILD) {
 				$this->debug("process '$file");
-				ob_start();
 
-				$error = NULL;
-				try {
-					if ($this->coverageModes) {
-						$covers = $collector->covers($file);
-						$collector->collect(function() use ($file) {
-							require_once $file;
-						}, $file, $covers);
-
-					} else {
-						require_once $file;
-					}
-				} catch (\Error $error) {
-				} finally {
-					$output = ob_get_clean();
-					$mutex->synchronized(Mutex::STD_OUT, function() use ($file, $output) {
-						if ($output) {
-							$this->output->writeln("<test-case>$file</test-case>");
-							$this->output->writeln($output);
-						}
-					});
-					$this->debug("exit");
-
-					if ($error !== NULL) {
-						$mutex->synchronized(Mutex::STD_OUT, function() use ($file, $error) {
-							$this->output->writeln("<test-case>$file</test-case>");
-							$this->output->writeln('-  <error>' . get_class($error) . ': ' . $error->getMessage() . '</error>');
-							$this->output->writeln('<trace>' . $error->getTraceAsString() . '</trace>');
-						});
-						exit(1);
-					}
-					exit(0);
-				}
+				$runner = new TestRunner($file, $this->mutex);
+				$status = $this->coverageModes ? $runner->runWithCoverage($this->collector) : $runner->run();
+				$this->mutex->synchronized(Mutex::STD_OUT, function() use ($file, $runner) {
+					$this->printTestResults($file, $runner);
+				});
+				exit($status);
 
 			} else {
 				$this->debug("loop");
@@ -167,44 +155,84 @@ class Controller
 			}
 		}
 
-		// only parent will get here
+		// only parent process will get here
 		$control->waitForChildren();
 
 		$counter = $control->getCounter();
 		$this->printResults($counter);
 
 		if ($this->coverageModes) {
-			echo "Generating code coverage report\n";
-
-			$factory = new PhpUnitCoverageFactory($this->whitelist);
-			$phpUnitCoverage = $factory->create($collector->getCoverages());
-			$collector->destroy();
-
-			foreach ($this->coverageModes as $mode => $option) {
-				switch ($mode) {
-					case self::COVERAGE_CLOVER:
-						$writer = new PHP_CodeCoverage_Report_Clover();
-						$writer->process($phpUnitCoverage, $option);
-						$this->output->writeln("Clover coverage report generated to '<comment>$option</comment>'");
-						break;
-					case self::COVERAGE_CRAP4J:
-						$writer = new PHP_CodeCoverage_Report_Crap4j();
-						$writer->process($phpUnitCoverage, $option);
-						$this->output->writeln("Crap4j coverage report generated to '<comment>$option</comment>'");
-						break;
-					case self::COVERAGE_HTML:
-						$writer = new PHP_CodeCoverage_Report_HTML();
-						$writer->process($phpUnitCoverage, $option);
-						$this->output->writeln("Html coverage report generated to '<comment>$option</comment>'");
-						break;
-					default:
-						assert(FALSE, "Unsupported mode '$mode'");
-				}
-			}
+			$this->generateCoverageReports();
 		}
 
 		$this->debug("exit");
 		return $counter[ProcessManager::CODE_FAIL] !== 0 ? 1 : 0;
+	}
+
+
+	/**
+	 * @param string     $file
+	 * @param TestRunner $runner
+	 */
+	protected function printTestResults(string $file, TestRunner $runner)
+	{
+		$status = $runner->getStatus();
+		if ($status === ProcessManager::CODE_SUCCESS) {
+			return;
+		}
+
+		if ($status === ProcessManager::CODE_SKIP) {
+			$this->output->writeln("<fg=yellow;underscore=underscore;bold=bold>$file</> skipped");
+
+			return;
+		}
+
+		$postfix = '';
+		if ($status === ProcessManager::CODE_ERROR) {
+			$postfix = '<bg=red>errored</>';
+		}
+
+		$this->output->writeln("<test-case>$file</test-case> $postfix");
+		if ($runner->getOutput()) {
+			$this->output->writeln($runner->getOutput());
+		}
+		if ($e = $runner->getError()) {
+			$this->output->writeln('<error>' . get_class($e) . ': ' . $e->getMessage() . '</error>');
+			$this->output->writeln("\n<trace>" . $e->getTraceAsString() . "</trace>");
+		}
+		$this->output->writeln('');
+	}
+
+
+	protected function generateCoverageReports()
+	{
+		$this->output->writeln("Generating code coverage report");
+
+		$factory = new PhpUnitCoverageFactory($this->whitelist);
+		$phpUnitCoverage = $factory->create($this->collector->getCoverages());
+		$this->collector->destroy();
+
+		foreach ($this->coverageModes as $mode => $option) {
+			switch ($mode) {
+				case self::COVERAGE_CLOVER:
+					$writer = new PHP_CodeCoverage_Report_Clover();
+					$writer->process($phpUnitCoverage, $option);
+					$this->output->writeln("Clover coverage report generated to '<comment>$option</comment>'");
+					break;
+				case self::COVERAGE_CRAP4J:
+					$writer = new PHP_CodeCoverage_Report_Crap4j();
+					$writer->process($phpUnitCoverage, $option);
+					$this->output->writeln("Crap4j coverage report generated to '<comment>$option</comment>'");
+					break;
+				case self::COVERAGE_HTML:
+					$writer = new PHP_CodeCoverage_Report_HTML();
+					$writer->process($phpUnitCoverage, $option);
+					$this->output->writeln("Html coverage report generated to '<comment>$option</comment>'");
+					break;
+				default:
+					assert(FALSE, "Unsupported mode '$mode'");
+			}
+		}
 	}
 
 
@@ -221,15 +249,17 @@ class Controller
 		};
 
 		$this->output->write("\n");
+
+		if ($errored) {
+			$this->output->writeln("<fg=red;bold=bold>$errored test{$s($errored)} errored</>");
+		}
+
 		if ($failed) {
 			$this->output->writeln("<error>$failed test{$s($failed)} failed / $total total</error>");
 		} else {
 			$this->output->writeln("<info>$success test{$s($success)} succeeded</info>");
 		}
 
-		if ($errored) {
-			$this->output->writeln("<error>$errored test{$s($errored)} errored</error>");
-		}
 		if ($skipped) {
 			$this->output->writeln("<comment>$skipped test{$s($failed)} skipped</comment>");
 		}

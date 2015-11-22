@@ -52,7 +52,7 @@ class CoverageCollector
 	 * @param callable      $cb
 	 * @param string|string $testId file name or other unique identificator
 	 * @param array         $covers [string $fqn]
-	 * @return int
+	 * @return mixed output of $cb
 	 */
 	public function collect(callable $cb, string $testId, $covers = [])
 	{
@@ -60,16 +60,7 @@ class CoverageCollector
 		$driver->start();
 
 		try {
-			$cb();
-			$status = ProcessManager::CODE_SUCCESS;
-
-		} catch (\AssertionError $e) {
-			$status = ProcessManager::CODE_FAIL;
-			throw $e;
-
-		} catch (\Error $e) {
-			$status = ProcessManager::CODE_ERROR;
-			throw $e;
+			return $cb();
 
 		} finally {
 			$coverage = $driver->stop();
@@ -81,8 +72,6 @@ class CoverageCollector
 				$this->data->set($coverages);
 			});
 		}
-
-		return $status;
 	}
 
 
