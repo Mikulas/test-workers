@@ -65,6 +65,10 @@ class TestRunner
 			$this->error = $error;
 			$status = ProcessManager::CODE_FAIL;
 
+		} catch (\Tester\AssertException $error) {
+			$this->error = $error;
+			$status = ProcessManager::CODE_FAIL;
+
 		} catch (\Throwable $error) {
 			$this->error = $error;
 			$status = ProcessManager::CODE_ERROR;
