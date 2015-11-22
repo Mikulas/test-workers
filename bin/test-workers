@@ -1,7 +1,15 @@
 #!/usr/bin/env phpdbg -qrr
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+$devAutoload = __DIR__ . '/../vendor/autoload.php';
+if (file_exists($devAutoload)) {
+	// dev mode
+	require $devAutoload;
+
+} else {
+	// dependency mode
+	require __DIR__ . '/../../../autoload.php';
+}
 
 if (PHP_SAPI !== 'phpdbg')
 {
