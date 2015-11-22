@@ -24,6 +24,7 @@ class SharedFileVariable implements ISharedVariable
 	{
 		$this->mutex = $mutex;
 		$this->file = sys_get_temp_dir() . '/' . bin2hex(random_bytes(24));
+		$this->set($initialValue);
 	}
 
 
@@ -34,9 +35,7 @@ class SharedFileVariable implements ISharedVariable
 	{
 		assert(!$this->destroyed);
 		return $this->mutex->synchronized([__CLASS__, $this->file], function() {
-			if (!file_exists($this->file)) {
-				return NULL;
-			}
+			assert(file_exists($this->file), "Shared file '{$this->file}' was removed while being used");
 			return unserialize(file_get_contents($this->file));
 		});
 	}

@@ -12,7 +12,9 @@ require __DIR__ . '/../boostrap.php';
  */
 
 $mutex = new Mutex(sys_get_temp_dir());
-$shared = new SharedFileVariable($mutex, []);
+$shared = new SharedFileVariable($mutex, ['initial' => 'value']);
+
+assert(['initial' => 'value'] === $shared->get(), 'Initial value is saved');
 
 $childPid = pcntl_fork();
 assert($childPid !== -1, 'Fork failed');
@@ -55,23 +57,28 @@ if ($childPid) {
 
 	$shared->destroy();
 
+	$e = NULL;
 	try {
 		$shared->destroy();
 	} catch (\AssertionError $e) {}
 	assert($e !== NULL, 'SharedVariable::destroy must throw after call to destroy()');
 
+	$e = NULL;
 	try {
 		$shared->get();
 	} catch (\AssertionError $e) {}
 	assert($e !== NULL, 'SharedVariable::get must throw after call to destroy()');
 
+	$e = NULL;
 	try {
 		$shared->set([1]);
 	} catch (\AssertionError $e) {}
 	assert($e !== NULL, 'SharedVariable::save must throw after call to destroy()');
 
 	//echo "parent exit\n";
-	exit($childExitCode);
+	if ($childExitCode) {
+		throw new \Exception(NULL, $childExitCode);
+	}
 
 } else {
 	// child
@@ -90,6 +97,8 @@ if ($childPid) {
 	$shared->set('foo');
 	//echo "child sleeps\n";
 	usleep($syncDuration - (microtime(TRUE) - $delta));
+
+	exit; // prevent coverage from this branch overriding parent branch
 
 	//echo "child exit\n";
 }
