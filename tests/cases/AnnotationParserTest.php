@@ -10,11 +10,13 @@ require __DIR__ . '/../boostrap.php';
  */
 
 $file = __DIR__ . '/../fixtures/usings.php';
+$emptyFile = __DIR__ . '/../fixtures/empty.php';
 
 $parser = new AnnotationParser();
 
 $expectations = [
 	'Root\Something' => 'Something',
+	'Root\DateTime' => 'DateTime',
 	'Alpha\Beta' => 'Alias',
 	'Alpha\Beta\Foo' => 'Alias\Foo',
 	'Alpha\Beta\Gama' => 'Gama',
@@ -42,3 +44,6 @@ $expected = [
 ];
 $found = $parser->getAnnotations($file);
 assert($expected === $found);
+
+$found = $parser->getAnnotations($emptyFile);
+assert([] === $found);
