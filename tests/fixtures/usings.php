@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @covers Foo\Bar
+ *    @covers Foo\bar
+ * @empty
+ */
+/** @inline */
+
 namespace Root;
 
 use Alpha\Beta as Alias;

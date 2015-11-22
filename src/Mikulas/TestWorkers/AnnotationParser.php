@@ -31,17 +31,19 @@ class AnnotationParser
 			return [];
 		}
 
-		$docblock = array_shift($comments)[1];
-
 		$annotations = [];
-		// Strip away the docblock header and footer to ease parsing of one line annotations
-		$docblock = substr($docblock, 3, -2);
+		foreach ($comments as $comment) {
+			$docblock = $comment[1];
 
-		if (preg_match_all('/@(?P<name>[A-Za-z_-]+)(?:[ \t]+(?P<value>.*?))?[ \t]*\r?$/m', $docblock, $matches)) {
-			$numMatches = count($matches[0]);
+			// Strip away the docblock header and footer to ease parsing of one line annotations
+			$docblock = substr($docblock, 3, -2);
 
-			for ($i = 0; $i < $numMatches; ++$i) {
-				$annotations[$matches['name'][$i]][] = $matches['value'][$i];
+			if (preg_match_all('/@(?P<name>[A-Za-z_-]+)(?:[ \t]+(?P<value>.*?))?[ \t]*\r?$/m', $docblock, $matches)) {
+				$numMatches = count($matches[0]);
+
+				for ($i = 0; $i < $numMatches; ++$i) {
+					$annotations[$matches['name'][$i]][] = $matches['value'][$i];
+				}
 			}
 		}
 

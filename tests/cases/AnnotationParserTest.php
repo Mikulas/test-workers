@@ -27,3 +27,18 @@ foreach ($expectations as $fqn => $name) {
 	$real = $parser->toFqn($file, $name);
 	assert($fqn === $real, "'$name' FQN should be '$fqn' !== '$real'");
 }
+
+$expected = [
+	'covers' => [
+		'Foo\\Bar',
+		'Foo\\bar',
+	],
+	'empty' => [
+		'',
+	],
+	'inline' => [
+		'',
+	],
+];
+$found = $parser->getAnnotations($file);
+assert($expected === $found);
