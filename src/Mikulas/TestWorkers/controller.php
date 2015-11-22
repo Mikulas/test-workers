@@ -25,6 +25,12 @@ class Controller
 	/** @var int */
 	private $processLimit;
 
+	/** @var string[] */
+	private $coverageModes;
+
+	/** @var string[] filenames */
+	private $whitelist;
+
 
 	public function __construct(OutputInterface $output, int $processLimit)
 	{
@@ -33,6 +39,17 @@ class Controller
 		$this->parentPID = getmypid();
 		$this->output = $output;
 		$this->processLimit = $processLimit;
+	}
+
+
+	/**
+	 * @param string[] $coverageModes
+	 * @param string[] $whitelist filenames
+	 */
+	public function setCoverageOptions(array $coverageModes, array $whitelist = [])
+	{
+		$this->coverageModes = $coverageModes;
+		$this->whitelist = $whitelist;
 	}
 
 
@@ -81,13 +98,22 @@ class Controller
 
 	/**
 	 * @param string[] $filesToRun
-	 * @param string[] $whitelist
-	 * @param string[] $coverageModes
+	 * @param string   $setupFile
 	 * @return int exit code
 	 */
-	public function run(array $filesToRun, array $whitelist = [], array $coverageModes = [])
+	public function run(array $filesToRun, string $setupFile = NULL)
 	{
 		$this->setupEnvironment();
+
+		global $_SETUP;
+		if ($setupFile) {
+			if (!is_readable($setupFile)) {
+				$this->output->writeln("<error>Setup file '$setupFile' is not readable\n");
+				exit(1);
+			}
+
+			$_SETUP = require_once $setupFile;
+		}
 
 		$control = new ProcessManager(getmypid(), $this->processLimit);
 		$control->setDebugCallback(function($message) {
@@ -104,7 +130,7 @@ class Controller
 
 				$error = NULL;
 				try {
-					if ($coverageModes) {
+					if ($this->coverageModes) {
 						$covers = $collector->covers($file);
 						$collector->collect(function() use ($file) {
 							require_once $file;
@@ -147,14 +173,14 @@ class Controller
 		$counter = $control->getCounter();
 		$this->printResults($counter);
 
-		if ($coverageModes) {
+		if ($this->coverageModes) {
 			echo "Generating code coverage report\n";
 
-			$factory = new PhpUnitCoverageFactory($whitelist);
+			$factory = new PhpUnitCoverageFactory($this->whitelist);
 			$phpUnitCoverage = $factory->create($collector->getCoverages());
 			$collector->destroy();
 
-			foreach ($coverageModes as $mode => $option) {
+			foreach ($this->coverageModes as $mode => $option) {
 				switch ($mode) {
 					case self::COVERAGE_CLOVER:
 						$writer = new PHP_CodeCoverage_Report_Clover();
@@ -203,6 +229,8 @@ class Controller
 		if ($skipped) {
 			$this->output->writeln("<comment>$skipped test{$s($failed)} skipped</comment>");
 		}
+
+		$this->output->writeln('');
 	}
 
 }

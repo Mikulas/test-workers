@@ -1,0 +1,3 @@
+setup included
+with-setup test executed
+string(13) "setup content"
