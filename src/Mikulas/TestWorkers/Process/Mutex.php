@@ -79,16 +79,15 @@ class Mutex
 	/**
 	 * @param  mixed $key
 	 * @return string
-	 * @throws InvalidArgumentException
 	 */
 	protected function getKey($key) : string
 	{
-		if (is_string($key)) {
+		if (is_scalar($key)) {
 			return md5($key);
-		} elseif (is_array($key)) {
-			return md5(implode("\x00", $key));
+
 		} else {
-			throw new InvalidArgumentException();
+			assert(is_array($key), 'Invalid key');
+			return md5(implode("\x00", $key));
 		}
 	}
 
