@@ -12,10 +12,12 @@ install:
   - phpenv config-rm xdebug.ini || true
   - travis_retry composer self-update --no-progress --no-interaction
   - travis_retry composer install --prefer-dist --no-dev --no-progress --classmap-authoritative --no-interaction
+  - stages/ci/setup-coveralls.sh
+  - composer dumpautoload --classmap-authoritative
 
 script:
   - tests/cases/controller.sh
-  - phpdbg -qrr bin/test-workers --coverage-clover=phpunit.xml.dist --whitelist=src $(find tests/cases -name "*.php")
+  - phpdbg -qrr bin/test-workers --coverage-clover=stages/ci/clover.xml --whitelist=src $(find tests/cases -name "*.php")
 
 after_script:
   - stages/ci/push-coveralls.sh
