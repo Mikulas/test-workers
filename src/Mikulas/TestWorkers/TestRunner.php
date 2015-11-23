@@ -24,6 +24,9 @@ class TestRunner
 	/** @var int */
 	private $status;
 
+	/** @var float */
+	private $elapsed;
+
 
 	public function __construct(string $file, Mutex $mutex)
 	{
@@ -51,6 +54,7 @@ class TestRunner
 		$this->executed = TRUE;
 
 		ob_start();
+		$timeStarted = microtime(TRUE);
 		try {
 			$testResponse = require_once $this->file;
 			if ($testResponse === 1) { // successful require without return
@@ -76,6 +80,7 @@ class TestRunner
 		} finally {
 			$this->output = ob_get_clean();
 			$this->status = $status;
+			$this->elapsed = microtime(TRUE) - $timeStarted;
 			return $status;
 		}
 	}
@@ -107,6 +112,15 @@ class TestRunner
 	public function getStatus()
 	{
 		return $this->status;
+	}
+
+
+	/**
+	 * @return float seconds
+	 */
+	public function getElapsed()
+	{
+		return $this->elapsed;
 	}
 
 }

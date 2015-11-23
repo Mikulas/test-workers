@@ -200,14 +200,16 @@ class Controller
 			if ($this->output->getVerbosity() < OutputInterface::VERBOSITY_VERBOSE) {
 				$this->output->write('.');
 			} elseif ($this->output->getVerbosity() < OutputInterface::VERBOSITY_VERY_VERBOSE) {
-				$this->output->writeln($file);
+				$this->output->write($file);
+				$this->appendDuration($runner);
 			}
 			return;
 		}
 
 		$this->output->writeln('');
 		if ($status === ProcessManager::CODE_SKIP) {
-			$this->output->writeln("<fg=yellow;underscore=underscore;bold=bold>$file</> skipped");
+			$this->output->write("<fg=yellow;underscore=underscore;bold=bold>$file</> skipped");
+			$this->appendDuration($runner);
 			return;
 		}
 
@@ -216,7 +218,9 @@ class Controller
 			$postfix = '<bg=red>errored</>';
 		}
 
-		$this->output->writeln("<test-case>$file</test-case> $postfix");
+		$this->output->write("<test-case>$file</test-case> $postfix");
+		$this->appendDuration($runner);
+
 		if ($runner->getOutput()) {
 			$this->output->writeln($runner->getOutput());
 		}
@@ -225,6 +229,12 @@ class Controller
 			$this->output->writeln("\n<trace>" . $e->getTraceAsString() . "</trace>");
 		}
 		$this->output->writeln('');
+	}
+
+
+	private function appendDuration(TestRunner $runner)
+	{
+		$this->output->writeln(' <fg=blue>' . number_format($runner->getElapsed(), 2) . ' s</>');
 	}
 
 
