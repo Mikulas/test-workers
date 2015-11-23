@@ -85,8 +85,17 @@ class Controller
 	 */
 	protected function setupEnvironment()
 	{
+		global $argv, $argc;
+
 		ini_set('zend.assertions', 1); // generate and execute code
 		ini_set('assert.exception', 1); // throw exceptions
+
+		// prevent Nette\Tester breaking up
+		putenv('NETTE_TESTER_COVERAGE=');
+		$_SERVER['console_argv'] = $_SERVER['argv'];
+		$_SERVER['console_argc'] = $_SERVER['argc'];
+		$_SERVER['argv'] = [$_SERVER['console_argv'][0]];
+		$_SERVER['argc'] = 0;
 	}
 
 
@@ -147,6 +156,7 @@ class Controller
 				$this->mutex->synchronized(Mutex::STD_OUT, function() use ($file, $runner) {
 					$this->printTestResults($file, $runner);
 				});
+				$this->debug("exit with '$status'");
 				exit($status);
 
 			} else {
@@ -156,6 +166,7 @@ class Controller
 		}
 
 		// only parent process will get here
+		$this->debug("waiting for children");
 		$control->waitForChildren();
 
 		$counter = $control->getCounter();
@@ -164,6 +175,11 @@ class Controller
 		if ($this->coverageModes) {
 			$this->generateCoverageReports();
 		}
+
+		// skip Nette\Tester processing in parent thread
+		register_shutdown_function(function() {
+			exit; // prevent further shutdown handlers
+		});
 
 		$this->debug("exit");
 		return $counter[ProcessManager::CODE_FAIL] !== 0 ? 1 : 0;
@@ -178,12 +194,17 @@ class Controller
 	{
 		$status = $runner->getStatus();
 		if ($status === ProcessManager::CODE_SUCCESS) {
+			if ($this->output->getVerbosity() < OutputInterface::VERBOSITY_VERBOSE) {
+				$this->output->write('.');
+			} elseif ($this->output->getVerbosity() < OutputInterface::VERBOSITY_VERY_VERBOSE) {
+				$this->output->writeln($file);
+			}
 			return;
 		}
 
+		$this->output->writeln('');
 		if ($status === ProcessManager::CODE_SKIP) {
 			$this->output->writeln("<fg=yellow;underscore=underscore;bold=bold>$file</> skipped");
-
 			return;
 		}
 
