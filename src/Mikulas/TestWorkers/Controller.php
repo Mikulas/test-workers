@@ -125,7 +125,10 @@ class Controller
 			exit(1);
 		}
 
+		define('TEST_WORKERS_SETUP', TRUE);
+		$this->debug("requiring setup file '$setupFile'");
 		$_SETUP = require_once $setupFile;
+		$GLOBALS['SETUP'] = $_SETUP;
 	}
 
 
