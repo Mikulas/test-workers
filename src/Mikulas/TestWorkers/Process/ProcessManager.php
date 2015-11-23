@@ -68,8 +68,7 @@ class ProcessManager
 
 		while (count($this->children) >= $this->childLimit) {
 			$this->debug("waiting for any child to report status\n");
-			pcntl_wait($status, WUNTRACED);
-			$this->collectStatus();
+			$this->collectStatus(TRUE);
 		}
 
 		$childPid = pcntl_fork();
@@ -88,12 +87,15 @@ class ProcessManager
 	/**
 	 * Removes $children PIDs that have exited
 	 */
-	protected function collectStatus()
+	protected function collectStatus($block = FALSE)
 	{
 		assert(getmypid() === $this->allowedPID, 'Collect status only allowed from original parent process');
 
+		$flag = $block ? NULL : WNOHANG;
+
 		foreach ($this->children as $childPID => $_) {
-			$ret = pcntl_waitpid($childPID, $status, WNOHANG);
+			$ret = pcntl_waitpid($childPID, $status, WUNTRACED|$flag);
+			$flag = WNOHANG;
 			assert($ret !== -1, "Collect status failed, count not get status of '$childPID'");
 
 			if ($ret === 0) {
