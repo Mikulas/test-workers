@@ -6,6 +6,10 @@
 
 PHP 7 alternative to PHPUnit, Nette Tester and other tools.
 
+## Experimental and not maintained
+
+This was merely a test of how faster tests could be with shared bootstrap and forking. Turns out that quite a bit, but not enough to justify the amount of work needed (right now) to solve minor instabilities and to support this well.
+
 ## Features
 
 - Parallel test execution
